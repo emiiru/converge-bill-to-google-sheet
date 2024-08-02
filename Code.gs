@@ -3,7 +3,7 @@ const SHEET_NAME = 'Sheet1'; // Change if your sheet name is different
 const PROCESSED_LABEL_NAME = 'Processed';
 
 function processConverge() {
-  const threads = GmailApp.search('from:noreply@e-soa.convergeict.com" has:attachment');
+  const threads = GmailApp.search('from:noreply@e-soa.convergeict.com has:attachment');
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1')
   const processedLabel = getOrCreateLabel(PROCESSED_LABEL_NAME);
 
