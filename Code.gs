@@ -4,7 +4,7 @@ const PROCESSED_LABEL_NAME = 'Processed';
 
 function processConverge() {
   const threads = GmailApp.search('from:noreply@e-soa.convergeict.com has:attachment');
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1')
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   const processedLabel = getOrCreateLabel(PROCESSED_LABEL_NAME);
 
   threads.forEach(thread => {
@@ -12,18 +12,19 @@ function processConverge() {
       const messages = thread.getMessages();
       messages.forEach(message => {
         const body = message.getPlainBody();
-        const accountNumberMatch = body.match(/(?<=.*Account Number.*\s+\n.*\s+\n).*/)
-        const previousUnpaidBalanceMatch = body.match(/(?<=.*Balance from Last Bill.*\s+\n.*\s+\n).*/)
-        const currentBillingMatch = body.match(/(?<=.*Current Billing.*\s+\n.*\s+\n).*/)
-        const dueDateMatch = body.match(/(?<=.*Due Date.*\s+\n.*\s+\n).*/)
-        const totalAmountDueMatch = body.match(/(?<=.*Total Amount Due.*\s+\n.*\s+\n).*/)
+        
+        const accountNumberMatch = body.match(/Account Number:\s*(\d+)/);
+        const previousUnpaidBalanceMatch = body.match(/Previous Unpaid Balance:\s*([\d,\.]+)/);
+        const currentBillingMatch = body.match(/Current Billing:\s*([\d,\.]+)/);
+        const totalAmountDueMatch = body.match(/Total Amount Due:\s*([\d,\.]+)/);
+        const dueDateMatch = body.match(/Due Date:\s*(.*)/);
 
-        if (accountNumberMatch && previousUnpaidBalanceMatch && currentBillingMatch && dueDateMatch && totalAmountDueMatch) {
-          const accountNumber = "'" + accountNumberMatch[0].replaceAll('*', '')
-          const previousUnpaidBalance = previousUnpaidBalanceMatch[0].replaceAll('*', '')
-          const currentBilling = currentBillingMatch[0].replaceAll('*', '')
-          const totalAmountDue = totalAmountDueMatch[0].replaceAll('*', '')
-          const dueDate = formatDate(dueDateMatch[0].replaceAll('*', ''))
+        if (accountNumberMatch && previousUnpaidBalanceMatch && currentBillingMatch && totalAmountDueMatch && dueDateMatch) {
+          const accountNumber = "'" + accountNumberMatch[1].replaceAll('*', '');
+          const previousUnpaidBalance = previousUnpaidBalanceMatch[1].replaceAll('*', '');
+          const currentBilling = currentBillingMatch[1].replaceAll('*', '');
+          const totalAmountDue = totalAmountDueMatch[1].replaceAll('*', '');
+          const dueDate = formatDate(dueDateMatch[1].replaceAll('*', ''));
        
           // Append the extracted data to the sheet
           sheet.appendRow([accountNumber, previousUnpaidBalance, currentBilling, totalAmountDue, dueDate, new Date()]);
@@ -39,8 +40,7 @@ function processConverge() {
 function formatDate(dateString) {
   const date = new Date(dateString);
   const formattedDate = Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd');
-
-  return formattedDate
+  return formattedDate;
 }
 
 function getOrCreateLabel(labelName) {
@@ -66,7 +66,7 @@ function createTrigger() {
 
   ScriptApp.newTrigger('processConverge')
     .timeBased()
-    .atHour(11)
+    .atHour(8)
     .everyDays(1)
     .create();
 }
